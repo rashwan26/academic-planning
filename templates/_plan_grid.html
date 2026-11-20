@@ -1,0 +1,38 @@
+<div class="plan-grid">
+{% for sem in plan %}
+  <div class="p-2">
+    <div class="sem-card">
+      <div class="sem-card-header {% if sem.is_summer %}summer{% else %}regular{% endif %}">
+        <span>
+          {% if sem.is_summer %}
+            <i class="bi bi-sun-fill me-2"></i>{{ sem.label }}
+            <span class="summer-comp-badge"><i class="bi bi-arrow-repeat me-1"></i>Compensation</span>
+          {% else %}
+            <i class="bi bi-calendar-week me-2"></i>{{ sem.label }}
+          {% endif %}
+        </span>
+        <span class="badge bg-white text-dark">{{ sem.total_hours }} CH</span>
+      </div>
+      <div class="sem-card-body">
+        {% for c in sem.courses %}
+          {% set is_pt = c.code in ["ECE3000","ECE4000"] %}
+          <span class="course-pill {% if is_pt %}pt-pill{% endif %}">
+            <span class="pill-code">{{ c.code }}</span>
+            <span>{{ c.name }}
+              {% if c.code == "ECE3000" %}<span class="pt-label">PT 1</span>{% endif %}
+              {% if c.code == "ECE4000" %}<span class="pt-label">PT 2</span>{% endif %}
+            </span>
+            <span class="pill-ch">{{ c.hours }}CH</span>
+          </span>
+        {% endfor %}
+        {% if not sem.courses %}
+          <span class="fst-italic small" style="color:var(--text-muted)">No courses scheduled.</span>
+        {% endif %}
+        <div class="sem-footer">
+          <i class="bi bi-book me-1"></i>{{ sem.courses | length }} course(s) · {{ sem.total_hours }} credit hours
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+</div>

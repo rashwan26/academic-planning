@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Academic Planning{% endblock %}</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+  /* ═══════════════════ LIGHT THEME ═══════════════════ */
+  :root {
+    --primary:        #1a3c6e;
+    --primary-grad:   #2d5fa8;
+    --accent:         #d97706;
+    --accent-light:   #fbbf24;
+    --bg:             #f0f4fb;
+    --surface:        #ffffff;
+    --surface-2:      #f8fafc;
+    --border:         #e2e8f0;
+    --text:           #1e293b;
+    --text-muted:     #64748b;
+    --success:        #16a34a;
+    --danger:         #dc2626;
+    --info:           #0891b2;
+    --warning:        #d97706;
+    --nav-bg:         #1a3c6e;
+    --nav-text:       rgba(255,255,255,.88);
+    --card-shadow:    0 2px 12px rgba(0,0,0,.07);
+    --card-hover:     0 4px 20px rgba(0,0,0,.12);
+    --summer-grad:    linear-gradient(90deg,#b45309,#d97706);
+    --reg-grad:       linear-gradient(90deg,#1a3c6e,#2d5fa8);
+    --pill-bg:        #eff6ff;
+    --pill-border:    #bfdbfe;
+    --pill-fail-bg:   #fff1f2;
+    --pill-fail-bdr:  #fecdd3;
+    --tab-active-bg:  var(--primary);
+    --tab-active-txt: #fff;
+    --input-bg:       #fff;
+    --input-border:   #cbd5e1;
+    --prereq-bg:      #fefce8;
+    --prereq-bdr:     #fde047;
+    --prereq-txt:     #854d0e;
+    --progress-bg:    #e2e8f0;
+    --stat-num-pass:  #16a34a;
+    --stat-num-fail:  #dc2626;
+    --stat-num-avail: #2563eb;
+    --stat-num-lock:  #64748b;
+  }
+
+  /* ═══════════════════ DARK THEME ═══════════════════ */
+  [data-theme="dark"] {
+    --primary:        #3b82f6;
+    --primary-grad:   #60a5fa;
+    --accent:         #f59e0b;
+    --accent-light:   #fbbf24;
+    --bg:             #0f172a;
+    --surface:        #1e293b;
+    --surface-2:      #162032;
+    --border:         #334155;
+    --text:           #e2e8f0;
+    --text-muted:     #94a3b8;
+    --success:        #22c55e;
+    --danger:         #f87171;
+    --info:           #22d3ee;
+    --warning:        #fbbf24;
+    --nav-bg:         #0f172a;
+    --nav-text:       rgba(255,255,255,.85);
+    --card-shadow:    0 2px 12px rgba(0,0,0,.4);
+    --card-hover:     0 4px 20px rgba(0,0,0,.6);
+    --summer-grad:    linear-gradient(90deg,#92400e,#b45309);
+    --reg-grad:       linear-gradient(90deg,#1e3a5f,#2563eb);
+    --pill-bg:        #1e3a5f;
+    --pill-border:    #2563eb;
+    --pill-fail-bg:   #3b0f0f;
+    --pill-fail-bdr:  #dc2626;
+    --tab-active-bg:  #2563eb;
+    --tab-active-txt: #fff;
+    --input-bg:       #1e293b;
+    --input-border:   #475569;
+    --prereq-bg:      #2d2000;
+    --prereq-bdr:     #ca8a04;
+    --prereq-txt:     #fef08a;
+    --progress-bg:    #334155;
+    --stat-num-pass:  #4ade80;
+    --stat-num-fail:  #f87171;
+    --stat-num-avail: #60a5fa;
+    --stat-num-lock:  #94a3b8;
+  }
+
+  /* ═══════════════════ BASE ═══════════════════ */
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    transition: background .25s, color .25s;
+  }
+  .navbar {
+    background: var(--nav-bg) !important;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    box-shadow: 0 1px 8px rgba(0,0,0,.2);
+  }
+  .navbar-brand {
+    color: var(--accent) !important;
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: -.3px;
+  }
+  .navbar .nav-link { color: var(--nav-text) !important; }
+  .navbar .nav-link:hover { color: var(--accent) !important; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
+    transition: box-shadow .2s, background .25s;
+  }
+  .card-header {
+    background: var(--surface-2) !important;
+    border-bottom: 1px solid var(--border) !important;
+    border-radius: 14px 14px 0 0 !important;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Stats */
+  .card-header { color: var(--text) !important; }
+  .stat-box {
+    text-align: center;
+    padding: 18px 12px;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--card-shadow);
+  }
+  .stat-box .num { font-size: 2rem; font-weight: 800; }
+  .stat-box .lbl { font-size: .8rem; color: var(--text-muted); margin-top: 2px; }
+  .stat-num-pass  { color: var(--stat-num-pass); }
+  .stat-num-fail  { color: var(--stat-num-fail); }
+  .stat-num-avail { color: var(--stat-num-avail); }
+  .stat-num-lock  { color: var(--stat-num-lock); }
+
+  /* Tables */
+  table thead { background: var(--primary); color: #fff; }
+  .table { color: var(--text); }
+  .table-hover tbody tr:hover { background: var(--surface-2); }
+  .table td, .table th { border-color: var(--border); }
+
+  /* Pills / Tabs */
+  .section-nav .nav-link {
+    color: var(--text-muted);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .section-nav .nav-link.active {
+    background: var(--tab-active-bg);
+    color: var(--tab-active-txt);
+    border-color: var(--tab-active-bg);
+  }
+
+  /* Progress bar */
+  .progress { background: var(--progress-bg); }
+
+  /* Inputs */
+  .form-control, .form-select {
+    background: var(--input-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--input-border) !important;
+  }
+  .form-control::placeholder { color: var(--text-muted); }
+  .form-label { color: var(--text-muted); }
+
+  /* Semester cards */
+  .sem-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 18px;
+    overflow: hidden;
+    transition: box-shadow .2s;
+  }
+  .sem-card:hover { box-shadow: var(--card-hover); }
+  .sem-card-header {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: .97rem;
+  }
+  .sem-card-header.regular { background: var(--reg-grad); color: #fff; }
+  .sem-card-header.summer  { background: var(--summer-grad); color: #fff; }
+  .sem-card-body { padding: 14px 18px 16px; background: var(--surface); }
+
+  /* Course pills */
+  .course-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--pill-bg);
+    border: 1px solid var(--pill-border);
+    border-radius: 22px;
+    padding: 5px 13px;
+    margin: 4px;
+    font-size: .83rem;
+    color: var(--text);
+  }
+  .course-pill.failed-pill {
+    background: var(--pill-fail-bg);
+    border-color: var(--pill-fail-bdr);
+  }
+  .course-pill.pt-pill {
+    background: linear-gradient(90deg,#14532d22,#16a34a22);
+    border-color: #16a34a77;
+  }
+  .pill-code { font-size: .68rem; color: var(--text-muted); font-weight: 600; }
+  .pill-ch   { font-size: .7rem; background: var(--border); border-radius: 10px; padding: 1px 6px; color: var(--text-muted); }
+  .sem-footer { font-size: .78rem; color: var(--text-muted); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+
+  /* Plan grid */
+  .plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 0;
+  }
+  @media (max-width:600px) { .plan-grid { grid-template-columns: 1fr; } }
+
+  /* Prereq badge */
+  .prereq-badge {
+    font-size: .72rem;
+    background: var(--prereq-bg);
+    color: var(--prereq-txt);
+    border: 1px solid var(--prereq-bdr);
+    border-radius: 10px;
+    padding: 2px 8px;
+    margin: 1px;
+    display: inline-block;
+  }
+
+  /* Load badge */
+  .load-badge { font-size: 1rem; padding: 8px 20px; border-radius: 30px; }
+
+  /* GPA live badge */
+  .gpa-live-badge {
+    font-size: .82rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    transition: background .3s;
+  }
+
+  /* Toast */
+  #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+
+  /* Alert */
+  .alert-info {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1e40af;
+  }
+  [data-theme="dark"] .alert-info {
+    background: #1e3a5f;
+    border-color: #2563eb;
+    color: #bfdbfe;
+  }
+
+  /* Dark-mode toggle button */
+  #theme-toggle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  #theme-toggle:hover { background: rgba(255,255,255,.22); }
+
+  /* Overload modal */
+  .modal-content {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .modal-header { border-bottom-color: var(--border); }
+  .modal-footer { border-top-color: var(--border); }
+  .modal-title { color: var(--text); }
+  .btn-close { filter: var(--close-filter, none); }
+
+  /* ── Comprehensive dark mode overrides ──────────────────────────── */
+  [data-theme="dark"] {
+    --close-filter: invert(1);
+  }
+  [data-theme="dark"] .card { background: var(--surface); color: var(--text); }
+  [data-theme="dark"] .card-header { color: var(--text) !important; background: var(--surface-2) !important; }
+  [data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * { background-color: rgba(255,255,255,.03); color: var(--text); }
+  [data-theme="dark"] .table > :not(caption) > * > * { background-color: transparent; color: var(--text); border-color: var(--border); }
+  [data-theme="dark"] .form-select option { background: var(--input-bg); color: var(--text); }
+  [data-theme="dark"] .btn-outline-primary { color: var(--primary); border-color: var(--primary); }
+  [data-theme="dark"] .btn-outline-primary:hover { background: var(--primary); color: #fff; }
+  [data-theme="dark"] .btn-outline-secondary { color: var(--text-muted); border-color: var(--border); }
+  [data-theme="dark"] .btn-outline-secondary:hover { background: var(--border); color: var(--text); }
+  [data-theme="dark"] .alert-warning { background: #2d1f00; border-color: #ca8a04; color: #fef08a; }
+  [data-theme="dark"] .alert-danger  { background: #2d0000; border-color: #dc2626; color: #fca5a5; }
+  [data-theme="dark"] .alert-success { background: #052e16; border-color: #16a34a; color: #86efac; }
+  [data-theme="dark"] .badge.bg-light { background: var(--surface-2) !important; color: var(--text) !important; }
+  [data-theme="dark"] .badge.bg-secondary { background: #334155 !important; }
+  [data-theme="dark"] .nav-pills .nav-link { color: var(--text-muted); }
+  [data-theme="dark"] .nav-pills .nav-link.active { background: var(--tab-active-bg); color: var(--tab-active-txt); }
+  [data-theme="dark"] .dropdown-menu { background: var(--surface); border-color: var(--border); }
+  [data-theme="dark"] .dropdown-item { color: var(--text); }
+  [data-theme="dark"] .dropdown-item:hover { background: var(--surface-2); }
+  [data-theme="dark"] .list-group-item { background: var(--surface); color: var(--text); border-color: var(--border); }
+  [data-theme="dark"] .progress { background: var(--progress-bg); }
+  [data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+  [data-theme="dark"] .text-dark { color: var(--text) !important; }
+  [data-theme="dark"] small { color: var(--text-muted); }
+  /* Fix inline-style overrides: card-header with hardcoded background colors */
+  [data-theme="dark"] .card-header[style*="background:var(--primary)"] { color: #fff !important; }
+  [data-theme="dark"] .card-header[style*="background:linear-gradient"] { color: #fff !important; }
+  /* Fix Add New Courses card header in dark mode */
+  [data-theme="dark"] .card-header[style*="#1e3a5f"] { color: #fff !important; }
+  /* Fix badge-hours and sem-footer in dark mode */
+  [data-theme="dark"] .badge-hours { background: var(--surface-2); color: var(--text-muted); border-color: var(--border); }
+  /* Fix pill-code and pill-ch text in dark mode */
+  [data-theme="dark"] .pill-code { color: #94a3b8; }
+  [data-theme="dark"] .pill-ch { background: var(--border); color: var(--text-muted); }
+  /* Fix PT pill in dark mode */
+  [data-theme="dark"] .course-pill.pt-pill { background: rgba(20,83,45,0.35); border-color: rgba(22,163,74,0.55); }
+  /* Fix pt-label in dark mode */
+  [data-theme="dark"] .pt-label { background: #14532d; color: #bbf7d0; }
+  /* Fix sem-card CH badge (bg-white text-dark) in dark mode */
+  [data-theme="dark"] .sem-card-header .badge.bg-white { background: rgba(255,255,255,0.15) !important; color: #fff !important; }
+  /* Fix section-nav tabs in dark mode — make text visible */
+  [data-theme="dark"] .section-nav .nav-link { color: var(--text) !important; background: var(--surface); border-color: var(--border); }
+  [data-theme="dark"] .section-nav .nav-link.active { background: var(--tab-active-bg) !important; color: #fff !important; border-color: var(--tab-active-bg); }
+  [data-theme="dark"] .section-nav .nav-link i { color: inherit; }
+  /* Light mode: ensure text on colored card-headers is visible */
+  [data-theme="light"] .card-header[style*="background:var(--primary)"],
+  [data-theme="light"] .card-header[style*="background:linear-gradient"] { color: #fff !important; }
+
+  /* Light mode explicit fixes for visibility */
+  [data-theme="light"] .card-header { color: var(--text); }
+  [data-theme="light"] .table > :not(caption) > * > * { color: var(--text); }
+  /* Light mode: form controls readable */
+  [data-theme="light"] .form-control, [data-theme="light"] .form-select { color: var(--text) !important; background: #fff !important; }
+  /* Light mode: locked tab text */
+  [data-theme="light"] .prereq-badge { color: var(--prereq-txt); background: var(--prereq-bg); }
+  /* Light mode: stat box labels */
+  [data-theme="light"] .stat-box .lbl { color: var(--text-muted); }
+
+  /* Badge-hours */
+  .badge-hours { background: var(--surface-2); color: var(--text); border-radius: 20px; padding: 3px 10px; font-size:.78rem; border: 1px solid var(--border); }
+
+  /* Semester-header legacy */
+  .semester-header        { background: var(--primary); color:#fff; border-radius:10px; padding:8px 16px; margin-bottom:8px; }
+  .semester-header.summer { background: var(--accent); color:#333; }
+
+  /* course-row */
+  .course-table td, .course-table th { vertical-align: middle; }
+  .course-row:hover { background: var(--surface-2); }
+  .plan-card        { border-left: 5px solid var(--primary); }
+  .plan-card.summer { border-left-color: var(--accent); }
+
+  /* Dots */
+  .status-dot   { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .dot-passed   { background: var(--success); }
+  .dot-failed   { background: var(--danger); }
+  .dot-available{ background: var(--primary); }
+  .dot-locked   { background: var(--text-muted); }
+
+  /* Hours bar */
+  .hours-bar { height: 18px; border-radius: 10px; }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-expand-lg shadow-sm">
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('dashboard') if session.get('student_id') else url_for('login') }}"><i class="bi bi-mortarboard-fill me-2"></i>Academic Planning</a>
+    <div class="ms-auto d-flex align-items-center gap-3">
+      {% if session.get('student_id') %}
+        <a href="{{ url_for('dashboard') }}" class="nav-link"><i class="bi bi-house me-1"></i>Dashboard</a>
+
+        <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-outline-light btn-sm">Logout</button></form>
+      {% endif %}
+      <button id="theme-toggle" title="Toggle Dark Mode" onclick="toggleTheme()">
+        <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ── Theme persistence ─────────────────────────────────────────────
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    const icon = document.getElementById("theme-icon");
+    if (icon) icon.className = theme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-stars-fill";
+    localStorage.setItem("theme", theme);
+  }
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute("data-theme") || "light";
+    applyTheme(cur === "dark" ? "light" : "dark");
+  }
+  // Apply saved theme immediately
+  (function() {
+    const saved = localStorage.getItem("theme") || "light";
+    applyTheme(saved);
+  })();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

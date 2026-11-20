@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Login — Academic Planning{% endblock %}
+
+{% block extra_head %}
+<style>
+  .login-wrapper {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding-top: 40px;
+  }
+  .login-box {
+    flex: 0 0 380px;
+    min-width: 300px;
+  }
+  .students-panel {
+    flex: 1 1 340px;
+    max-width: 600px;
+  }
+  .students-panel h5 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+  .s-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    transition: box-shadow .15s;
+  }
+  .s-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,.1); }
+  .s-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .95rem;
+    flex-shrink: 0;
+  }
+  .s-info { flex: 1; min-width: 0; }
+  .s-name { font-weight: 600; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .s-id   { font-size: .75rem; color: var(--text-muted); }
+  .s-pills { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 3px; }
+  .spill {
+    font-size: .68rem; font-weight: 600;
+    padding: 2px 7px; border-radius: 12px;
+  }
+  .spill-gpa  { background:#ede9fe; color:#4c1d95; }
+  .spill-pass { background:#d1fae5; color:#065f46; }
+  .spill-fail { background:#fee2e2; color:#991b1b; }
+  [data-theme="dark"] .spill-gpa  { background:#2e1065; color:#c4b5fd; }
+  [data-theme="dark"] .spill-pass { background:#052e16; color:#86efac; }
+  [data-theme="dark"] .spill-fail { background:#2d0000; color:#fca5a5; }
+  .empty-panel { text-align:center; color:var(--text-muted); padding: 30px 0; font-size:.9rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+
+  <!-- Login Form -->
+  <div class="login-box">
+    <div class="card shadow-lg">
+      <div class="card-header bg-primary text-white text-center py-3">
+        <h4 class="mb-0"><i class="bi bi-person-circle me-2"></i>Student Login</h4>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="mb-3">
+            <label for="registration" class="form-label fw-semibold">Registration number</label>
+            <input id="registration" name="student_id" class="form-control form-control-lg" autocomplete="username" maxlength="32" required>
+          </div>
+          <div class="mb-4">
+            <label for="password" class="form-label fw-semibold">Password</label>
+            <input id="password" type="password" name="password" class="form-control form-control-lg" autocomplete="current-password" maxlength="128" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-100">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+          </button>
+        </form>
+        <hr>
+        <div class="text-center">
+          <span class="text-muted">New student?</span>
+          <a href="{{ url_for('register') }}" class="btn btn-outline-warning btn-sm ms-2">
+            <i class="bi bi-person-plus me-1"></i>Create Account
+          </a>
+        </div>
+      </div>
+    </div>
+    <p class="text-center text-muted mt-3 small">Arab Academy for Science, Technology & Maritime Transport<br>Computer Engineering Program</p>
+  </div>
+
+  <div class="students-panel card p-4 mt-3">
+    <span class="badge bg-primary align-self-start mb-3">ACADEMIC PLANNING</span>
+    <h2>See the semesters ahead.</h2>
+    <p class="text-muted">Record your results, understand your prerequisites, and build a realistic course roadmap.</p>
+    <ul><li>Credit-weighted GPA and progress</li><li>Retakes and prerequisite-aware planning</li><li>Regular and summer semester projections</li></ul>
+    <small class="text-muted">An independent student project. Projections need confirmation from your academic advisor.</small>
+  </div>
+</div>
+{% endblock %}

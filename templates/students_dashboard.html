@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Students — Academic Planning{% endblock %}
+
+{% block extra_head %}
+<style>
+  .student-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    transition: transform .15s, box-shadow .15s;
+    overflow: hidden;
+  }
+  .student-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 24px rgba(0,0,0,.12);
+  }
+  .student-card .card-top {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    padding: 20px 20px 14px;
+    color: #fff;
+  }
+  .student-card .card-top .avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .student-card .card-top .s-name {
+    font-size: 1.1rem; font-weight: 700; margin: 0;
+  }
+  .student-card .card-top .s-id {
+    font-size: .8rem; opacity: .8;
+  }
+  .student-card .card-body {
+    padding: 14px 20px;
+  }
+  .stat-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .stat-pill {
+    font-size: .75rem; font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .pill-pass   { background: #d1fae5; color: #065f46; }
+  .pill-fail   { background: #fee2e2; color: #991b1b; }
+  .pill-avail  { background: #cffafe; color: #164e63; }
+  .pill-gpa    { background: #ede9fe; color: #4c1d95; }
+  [data-theme="dark"] .pill-pass   { background: #052e16; color: #86efac; }
+  [data-theme="dark"] .pill-fail   { background: #2d0000; color: #fca5a5; }
+  [data-theme="dark"] .pill-avail  { background: #0c2a33; color: #67e8f9; }
+  [data-theme="dark"] .pill-gpa    { background: #2e1065; color: #c4b5fd; }
+
+  .current-badge {
+    font-size: .7rem;
+    background: #fef3c7; color: #92400e;
+    border-radius: 6px; padding: 2px 8px;
+    margin-left: 6px; vertical-align: middle;
+  }
+  [data-theme="dark"] .current-badge { background: #451a03; color: #fde68a; }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-3 mb-4 align-items-center">
+  <div class="col">
+    <h3 class="mb-0">
+      <i class="bi bi-people-fill me-2" style="color:var(--primary)"></i>
+      Registered Students
+    </h3>
+    <p style="color:var(--text-muted)" class="mb-0">
+      {{ students | length }} student{{ 's' if students|length != 1 else '' }} registered
+    </p>
+  </div>
+</div>
+
+{% if students %}
+<div class="row g-3">
+  {% for s in students | sort(attribute='name') %}
+  <div class="col-sm-6 col-lg-4">
+    <div class="student-card">
+      <div class="card-top">
+        <div class="avatar">{{ s.name[0].upper() }}</div>
+        <p class="s-name">
+          {{ s.name }}
+          {% if s.student_id == current_sid %}
+          <span class="current-badge"><i class="bi bi-person-check me-1"></i>You</span>
+          {% endif %}
+        </p>
+        <div class="s-id"><i class="bi bi-hash"></i>{{ s.student_id }}</div>
+      </div>
+      <div class="card-body">
+        <div class="stat-row mb-3">
+          <span class="stat-pill pill-gpa">
+            <i class="bi bi-star-fill me-1"></i>GPA {{ s.gpa }}
+          </span>
+          <span class="stat-pill pill-pass">
+            <i class="bi bi-check2 me-1"></i>{{ s.passed }} Passed
+          </span>
+          {% if s.failed > 0 %}
+          <span class="stat-pill pill-fail">
+            <i class="bi bi-x me-1"></i>{{ s.failed }} Failed
+          </span>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-2">
+          {% if s.student_id == current_sid %}
+          <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-primary flex-fill">
+            <i class="bi bi-house me-1"></i>My Dashboard
+          </a>
+          {% else %}
+          <a href="{{ url_for('view_student', sid=s.student_id) }}" class="btn btn-sm btn-outline-primary flex-fill">
+            <i class="bi bi-eye me-1"></i>View Profile
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <i class="bi bi-people"></i>
+  <h5>No students registered yet</h5>
+  <p>Students will appear here once they create an account.</p>
+  <a href="{{ url_for('register') }}" class="btn btn-primary mt-2">
+    <i class="bi bi-person-plus me-1"></i>Register First Student
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}

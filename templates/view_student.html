@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }} — Profile{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hdr-passed   { background: #d1fae5; color: #065f46; }
+  .hdr-failed   { background: #fee2e2; color: #991b1b; }
+  .hdr-available{ background: #cffafe; color: #164e63; }
+  .hdr-locked   { background: #f3f4f6; color: #374151; }
+  [data-theme="dark"] .hdr-passed    { background: #052e16; color: #86efac; }
+  [data-theme="dark"] .hdr-failed    { background: #2d0000; color: #fca5a5; }
+  [data-theme="dark"] .hdr-available { background: #0c2a33; color: #67e8f9; }
+  [data-theme="dark"] .hdr-locked    { background: #1f2937; color: #9ca3af; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Back button -->
+<a href="{{ url_for('students_dashboard') }}" class="btn btn-sm btn-outline-secondary mb-3">
+  <i class="bi bi-arrow-left me-1"></i>Back to Students
+</a>
+
+<!-- Header -->
+<div class="row g-3 mb-4 align-items-center">
+  <div class="col-md-8">
+    <h3 class="mb-0">
+      <i class="bi bi-person-badge me-2" style="color:var(--primary)"></i>{{ student.name }}
+    </h3>
+    <p style="color:var(--text-muted)" class="mb-0">ID: {{ student.student_id }}</p>
+  </div>
+  <div class="col-md-4 text-md-end">
+    <span class="badge bg-{{ load_info.color }} text-white fs-6">
+      <i class="bi bi-speedometer2 me-1"></i>GPA {{ student.gpa }} — {{ load_info.label }}
+    </span>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="num stat-num-pass">{{ passed | length }}</div>
+      <div class="lbl">Passed</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="num stat-num-fail">{{ failed | length }}</div>
+      <div class="lbl">Failed</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="num stat-num-avail">{{ available | length }}</div>
+      <div class="lbl">Available Now</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="num stat-num-lock">{{ locked | length }}</div>
+      <div class="lbl">Locked</div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <div class="d-flex justify-content-between mb-1">
+      <span class="fw-semibold">Credit Hours Progress</span>
+      <span class="fw-bold">{{ hours_done }} / {{ total_hours }} CH</span>
+    </div>
+    <div class="progress hours-bar">
+      <div class="progress-bar bg-primary" style="width:{{ (hours_done/total_hours*100)|round(1) }}%"></div>
+    </div>
+    <div class="small mt-1" style="color:var(--text-muted)">
+      {{ (hours_done/total_hours*100)|round(1) }}% complete
+      {% if hours_done < 122 %}
+        <span class="ms-2 fw-semibold" style="color:var(--warning)">
+          <i class="bi bi-exclamation-triangle me-1"></i>{{ 122 - hours_done }} CH needed for Graduation Project
+        </span>
+      {% else %}
+        <span class="ms-2 fw-semibold" style="color:var(--success)">
+          <i class="bi bi-check-circle me-1"></i>Graduation Project unlocked!
+        </span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Courses Grid -->
+<div class="row g-3 mb-4">
+
+  <!-- Passed -->
+  {% if passed %}
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header hdr-passed fw-semibold">
+        <i class="bi bi-check-circle-fill me-1"></i>Passed Courses ({{ passed|length }})
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for c in passed %}
+          <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+            <div>
+              <span class="fw-semibold small">{{ c.code }}</span>
+              <span class="ms-2 small" style="color:var(--text-muted)">{{ c.name }}</span>
+            </div>
+            <span class="badge bg-success">{{ c.get('grade','—') }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Failed -->
+  {% if failed %}
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header hdr-failed fw-semibold">
+        <i class="bi bi-x-circle-fill me-1"></i>Failed Courses ({{ failed|length }})
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for c in failed %}
+          <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+            <div>
+              <span class="fw-semibold small">{{ c.code }}</span>
+              <span class="ms-2 small" style="color:var(--text-muted)">{{ c.name }}</span>
+            </div>
+            <span class="badge bg-danger">F</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Available -->
+  {% if available %}
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header hdr-available fw-semibold">
+        <i class="bi bi-unlock-fill me-1"></i>Available Now ({{ available|length }})
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for c in available %}
+          <li class="list-group-item py-2 px-3">
+            <span class="fw-semibold small">{{ c.code }}</span>
+            <span class="ms-2 small" style="color:var(--text-muted)">{{ c.name }}</span>
+            <span class="badge bg-secondary ms-1">{{ c.hours }} CH</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Academic Plan (read-only) -->
+{% if plan %}
+<div class="card">
+  <div class="card-header" style="background:var(--primary);color:#fff;">
+    <i class="bi bi-map me-2"></i>Academic Roadmap — {{ plan | length }} semesters
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      {% for sem in plan %}
+      <div class="col-sm-6 col-lg-4">
+        <div class="card h-100" style="border:1px solid var(--border);">
+          <div class="card-header py-2 {% if sem.is_summer %}bg-warning text-dark{% else %}bg-primary text-white{% endif %} fw-semibold small">
+            {{ sem.label }} — {{ sem.total_hours }} CH
+          </div>
+          <div class="card-body p-2">
+            <ul class="list-unstyled mb-0">
+              {% for c in sem.courses %}
+              <li class="py-1 border-bottom" style="font-size:.8rem;">
+                <span class="fw-semibold">{{ c.code }}</span>
+                <span class="ms-1 text-muted">{{ c.name }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

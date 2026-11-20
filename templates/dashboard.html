@@ -1,0 +1,723 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ student.name }}{% endblock %}
+{% block extra_head %}
+<style>
+  /* Overload ask banner */
+  #overload-banner {
+    background: linear-gradient(90deg, #1e3a5f, #2563eb);
+    color: #fff;
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  [data-theme="dark"] #overload-banner { background: linear-gradient(90deg,#0f2240,#1d4ed8); }
+  #overload-banner .ol-text { flex:1; min-width: 220px; }
+  #overload-banner .ol-text strong { font-size: 1rem; }
+  #overload-banner .ol-text p { margin:0; font-size:.85rem; opacity:.9; }
+  .ol-btn { font-weight: 600; border-radius: 8px; font-size: .87rem; padding: 7px 18px; }
+
+  /* Summer compensation badge */
+  .summer-comp-badge {
+    display: inline-block;
+    background: #7c2d12;
+    color: #fde68a;
+    font-size: .7rem;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 2px 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  [data-theme="dark"] .summer-comp-badge { background: #78350f; color: #fef3c7; }
+
+  /* PT special pill */
+  .pt-label {
+    font-size: .65rem;
+    background: #14532d;
+    color: #bbf7d0;
+    border-radius: 6px;
+    padding: 1px 6px;
+    margin-left: 4px;
+  }
+
+  /* Themed card headers (light default, dark override) */
+  .hdr-passed   { background: #d1fae5; color: #065f46; }
+  .hdr-failed   { background: #fee2e2; color: #991b1b; }
+  .hdr-available{ background: #cffafe; color: #164e63; }
+  .hdr-grades   { background: #fef9c3; color: #713f12; }
+
+  [data-theme="dark"] .hdr-passed    { background: #052e16; color: #86efac; }
+  [data-theme="dark"] .hdr-failed    { background: #2d0000; color: #fca5a5; }
+  [data-theme="dark"] .hdr-available { background: #0c2a33; color: #67e8f9; }
+  [data-theme="dark"] .hdr-grades    { background: #2d1f00; color: #fef08a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="alert alert-light border small">Planning estimate based on your entered results and the bundled catalogue. Future courses are assumed passed; availability and registration require advisor confirmation.</div>
+<!-- Header -->
+<div class="row g-3 mb-4 align-items-center">
+  <div class="col-md-8">
+    <h3 class="mb-0"><i class="bi bi-person-badge me-2" style="color:var(--primary)"></i>{{ student.name }}</h3>
+    <p style="color:var(--text-muted)" class="mb-0">ID: {{ student.student_id }}</p>
+  </div>
+  <div class="col-md-4 text-md-end">
+    <span class="badge load-badge bg-{{ load_info.color }} text-white">
+      <i class="bi bi-speedometer2 me-1"></i>{{ load_info.label }}
+    </span>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="num stat-num-pass">{{ passed | length }}</div>
+      <div class="lbl">Passed Courses</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="num stat-num-fail">{{ failed | length }}</div>
+      <div class="lbl">Failed Courses</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="num stat-num-avail">{{ available | length }}</div>
+      <div class="lbl">Available Now</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="num stat-num-lock">{{ locked | length }}</div>
+      <div class="lbl">Locked Courses</div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress + GPA -->
+<div class="row g-3 mb-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between mb-1">
+          <span class="fw-semibold">Credit Hours Progress</span>
+          <span class="fw-bold">{{ hours_done }} / {{ total_hours }} CH</span>
+        </div>
+        <div class="progress hours-bar">
+          <div class="progress-bar bg-primary" style="width:{{ (hours_done/total_hours*100)|round(1) }}%"></div>
+        </div>
+        <div class="small mt-1" style="color:var(--text-muted)">
+          {{ (hours_done/total_hours*100)|round(1) }}% complete
+          {% if hours_done < 122 %}
+            <span class="ms-2 fw-semibold" style="color:var(--warning)">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              {{ 122 - hours_done }} CH still needed to unlock Graduation Project
+            </span>
+          {% else %}
+            <span class="ms-2 fw-semibold" style="color:var(--success)">
+              <i class="bi bi-check-circle me-1"></i>Graduation Project unlocked!
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-semibold small">Current GPA</span>
+          <span class="badge bg-{{ load_info.color }}">{{ student.gpa }}</span>
+        </div>
+        <form method="POST" action="{{ url_for('update_gpa') }}" class="d-flex gap-2 align-items-end">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="flex-grow-1">
+            <label for="gpa-input" class="form-label mb-1 small">Override GPA manually</label>
+            <input id="gpa-input" type="number" name="gpa" step="0.01" min="0" max="4"
+                   value="{{ student.gpa }}" class="form-control form-control-sm">
+          </div>
+          <button aria-label="Save GPA" class="btn btn-sm btn-outline-primary" type="submit">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </form>
+        <!-- ── Manual Load Override ── -->
+        <hr class="my-2">
+        <form method="POST" action="{{ url_for('update_gpa_option') }}" class="d-flex gap-2 align-items-end">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="flex-grow-1">
+            <label for="load-option" class="form-label mb-1 small">
+              <i class="bi bi-sliders me-1"></i>Load per semester
+              {% if load_info.get('manual') %}
+              <span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;">Manual</span>
+              {% endif %}
+            </label>
+            <select id="load-option" name="gpa_option" class="form-select form-select-sm">
+              <option value="auto"     {% if not gpa_option %}selected{% endif %}>Auto (based on GPA)</option>
+              <option value="overload" {% if gpa_option == 'overload' %}selected{% endif %}>Overload — 21 CH</option>
+              <option value="normal"   {% if gpa_option == 'normal'   %}selected{% endif %}>Normal — 19 CH</option>
+              <option value="half"     {% if gpa_option == 'half'     %}selected{% endif %}>Half Load — 14 CH</option>
+            </select>
+          </div>
+          <button aria-label="Apply load option" class="btn btn-sm btn-outline-secondary" type="submit" title="Apply">
+            <i class="bi bi-check2"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<details class="card p-3 mb-3">
+  <summary class="fw-semibold">Update study timeline</summary>
+  <form method="post" action="{{ url_for('update_timeline') }}" class="row g-2 mt-2 align-items-end">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="col-md-5"><label for="completed-semester" class="form-label small">Last completed regular semester</label><input id="completed-semester" type="number" name="current_semester" min="0" max="32" value="{{ current_semester }}" class="form-control" required></div>
+    <div class="col-md-5"><label for="target-semesters" class="form-label small">Target total regular semesters</label><input id="target-semesters" type="number" name="total_semesters" min="2" max="16" value="{{ total_semesters }}" class="form-control" required></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">Update timeline</button></div>
+  </form>
+</details>
+<ul class="nav nav-pills section-nav mb-3 gap-2 flex-wrap">
+  <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tab-plan"><i class="bi bi-calendar3 me-1"></i>Academic Plan</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-passed"><i class="bi bi-check-circle me-1"></i>Passed ({{ passed|length }})</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-failed"><i class="bi bi-x-circle me-1"></i>Failed ({{ failed|length }})</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-available"><i class="bi bi-unlock me-1"></i>Available ({{ available|length }})</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-locked"><i class="bi bi-lock me-1"></i>Locked ({{ locked|length }})</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-grades"><i class="bi bi-pencil-square me-1"></i>Update Grades</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-add-courses"><i class="bi bi-plus-circle me-1"></i>Add New Courses</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- ── Academic Plan ────────────────────────────────────────── -->
+  <div class="tab-pane fade show active" id="tab-plan">
+    <div class="card">
+      <div class="card-header" style="background:var(--primary);color:#fff;">
+        <i class="bi bi-map me-2"></i>Generated Academic Roadmap
+        <a href="{{ url_for('export_plan') }}" class="btn btn-sm btn-light float-end">Download CSV</a>
+        <span class="badge bg-light text-dark ms-2" id="sem-count-badge">{{ plan | length }} terms projected</span>
+        {% if remaining_semesters is defined %}
+        <span class="badge bg-warning text-dark ms-2">
+          <i class="bi bi-hourglass-split me-1"></i>Target timeline: {{ remaining_semesters }} regular terms left ({{ total_semesters }} total − {{ current_semester }} completed)
+        </span>
+        {% endif %}
+      </div>
+      <div class="card-body p-3">
+
+        <!-- Overload offer banner (only for eligible GPA & normal plan) -->
+        {% if load_info.status == "Normal" %}
+        <div id="overload-banner">
+          <div class="ol-text">
+            <strong><i class="bi bi-lightning-charge-fill me-2"></i>Want to take extra courses next semester?</strong>
+            <p>Preview a 21 CH next semester. This is a what-if scenario and requires advisor approval.</p>
+          </div>
+          <button class="btn btn-warning ol-btn" id="btn-allow-overload">Yes, overload next sem</button>
+          <button class="btn btn-outline-light ol-btn" id="btn-no-overload">No thanks</button>
+        </div>
+        {% endif %}
+
+        <!-- Plan display -->
+        <div id="plan-container">
+          {% if not plan %}
+            <div class="text-center py-4" style="color:var(--success)">
+              <i class="bi bi-trophy-fill display-4"></i>
+              <h4 class="mt-3">Congratulations! All courses completed 🎓</h4>
+            </div>
+          {% else %}
+            {% include "_plan_grid.html" %}
+          {% endif %}
+        </div>
+
+        {% if plan %}
+        <div class="alert alert-info mt-2 mb-0 py-2">
+          <i class="bi bi-info-circle me-2"></i>
+          Projected completion across <strong id="sem-count-txt">{{ plan | length }}</strong> more terms, including summers. The projection may extend beyond your target timeline.
+          {% if has_failures %}
+            <span class="ms-2" style="color:var(--warning)"><i class="bi bi-sun me-1"></i>Summer sessions may include <strong>eligible retakes and overdue courses</strong>.</span>
+          {% endif %}
+          The plan auto-updates whenever you change grades or GPA.
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Passed ─────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-passed">
+    <div class="card">
+      <div class="card-header hdr-passed">
+        <i class="bi bi-check-circle-fill me-2"></i>Passed Courses
+      </div>
+      <div class="card-body p-0">
+        <table class="table course-table table-hover mb-0">
+          <thead><tr><th>Code</th><th>Course Name</th><th>CH</th><th>Grade</th></tr></thead>
+          <tbody>
+          {% for c in passed %}
+            <tr>
+              <td><span class="badge bg-secondary">{{ c.code }}</span></td>
+              <td>{{ c.name }}</td>
+              <td>{{ c.hours }}</td>
+              <td><span class="badge bg-success">{{ c.get('grade','—') }}</span></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-center py-3" style="color:var(--text-muted)">No passed courses yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Failed ─────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-failed">
+    <div class="card">
+      <div class="card-header hdr-failed">
+        <i class="bi bi-x-circle-fill me-2"></i>Failed Courses
+      </div>
+      <div class="card-body p-0">
+        <table class="table course-table table-hover mb-0">
+          <thead><tr><th>Code</th><th>Course Name</th><th>CH</th><th>Note</th></tr></thead>
+          <tbody>
+          {% for c in failed %}
+            <tr>
+              <td><span class="badge bg-secondary">{{ c.code }}</span></td>
+              <td>{{ c.name }}</td>
+              <td>{{ c.hours }}</td>
+              <td><span class="badge bg-warning text-dark"><i class="bi bi-arrow-repeat me-1"></i>Scheduled for retake next semester</span></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-center py-3" style="color:var(--text-muted)">No failed courses. Keep it up! 🎉</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Available ─────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-available">
+    <div class="card">
+      <div class="card-header hdr-available">
+        <i class="bi bi-unlock-fill me-2"></i>Available Courses (prerequisites met)
+      </div>
+      <div class="card-body p-0">
+        <table class="table course-table table-hover mb-0">
+          <thead><tr><th>Code</th><th>Course Name</th><th>CH</th><th>Planned Semester</th></tr></thead>
+          <tbody>
+          {% for c in available %}
+            <tr>
+              <td><span class="badge bg-secondary">{{ c.code }}</span></td>
+              <td>{{ c.name }}</td>
+              <td>{{ c.hours }}</td>
+              <td>{% if c.semester %}Sem {{ c.semester }}{% else %}<span style="color:var(--text-muted)">General</span>{% endif %}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-center py-3" style="color:var(--text-muted)">No available courses.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Locked ─────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-locked">
+    <div class="card">
+      <div class="card-header" style="background:var(--surface-2);">
+        <i class="bi bi-lock-fill me-2" style="color:var(--text-muted)"></i>Locked Courses (missing prerequisites)
+      </div>
+      <div class="card-body p-0">
+        <table class="table course-table table-hover mb-0">
+          <thead><tr><th>Code</th><th>Course Name</th><th>CH</th><th>Locked Reason</th></tr></thead>
+          <tbody>
+          {% for c in locked %}
+            <tr>
+              <td><span class="badge bg-secondary">{{ c.code }}</span></td>
+              <td>{{ c.name }}</td>
+              <td>{{ c.hours }}</td>
+              <td>
+                {% if c.locked_reason %}
+                  <span class="badge bg-danger text-white"><i class="bi bi-mortarboard me-1"></i>{{ c.locked_reason }}</span>
+                {% else %}
+                  {% for mn in c.missing_names %}
+                    <span class="prereq-badge"><i class="bi bi-exclamation-triangle me-1"></i>{{ mn }}</span>
+                  {% endfor %}
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-center py-3" style="color:var(--text-muted)">No locked courses.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Update Grades ──────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-grades">
+    <div class="card">
+      <div class="card-header hdr-grades">
+        <i class="bi bi-pencil-square me-2"></i>Update Course Grades
+        <small class="ms-2">(GPA & plan auto-recalculate on save)</small>
+      </div>
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:var(--surface-2);border:1px solid var(--border);">
+          <div>
+            <div class="small fw-semibold" style="color:var(--text-muted)">Live GPA Preview</div>
+            <div id="live-gpa" style="font-size:1.8rem; font-weight:800; color:var(--primary);">{{ student.gpa }}</div>
+          </div>
+          <div>
+            <span id="live-load-badge" class="badge bg-{{ load_info.color }} gpa-live-badge">{{ load_info.label }}</span>
+          </div>
+          <div class="ms-auto small" style="color:var(--text-muted)">Changes reflected after saving.</div>
+        </div>
+
+        <div id="grade-update-list">
+          {% set all_taken = passed + failed %}
+          {% if all_taken %}
+            <div class="row g-2">
+              {% for c in all_taken %}
+              <div class="col-md-6">
+                <div class="d-flex align-items-center gap-2 p-2 rounded" style="border:1px solid var(--border); background:var(--surface);">
+                  <div class="flex-grow-1">
+                    <span class="fw-semibold small">{{ c.name }}</span><br>
+                    <span class="small" style="color:var(--text-muted)">{{ c.code }} · {{ c.hours }} CH</span>
+                  </div>
+                  <select class="form-select form-select-sm grade-edit" style="width:110px"
+                          data-code="{{ c.code }}"
+                          data-hours="{{ c.hours }}"
+                          data-original="{{ c.get('grade','') }}">
+                    {% for g in ["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","F"] %}
+                    <option value="{{ g }}" {% if c.get('grade') == g %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-warning px-4" id="save-grades-btn">
+                <i class="bi bi-floppy me-2"></i>Save All Grade Changes & Recalculate Plan
+              </button>
+            </div>
+          {% else %}
+            <p style="color:var(--text-muted)">No courses taken yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Add New Courses ───────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-add-courses">
+    <div class="card">
+      <div class="card-header" style="background:linear-gradient(90deg,#1e3a5f,#2563eb);color:#fff;">
+        <i class="bi bi-plus-circle-fill me-2"></i>Add / Update Courses from Last Semester
+        <small class="ms-2 opacity-75">(GPA and plan are auto-updated)</small>
+      </div>
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:var(--surface-2);border:1px solid var(--border);">
+          <div>
+            <div class="small fw-semibold" style="color:var(--text-muted)">Live GPA Preview</div>
+            <div id="add-live-gpa" style="font-size:1.8rem;font-weight:800;color:var(--primary);">{{ student.gpa }}</div>
+          </div>
+          <div><span id="add-live-badge" class="badge bg-{{ load_info.color }} gpa-live-badge">{{ load_info.label }}</span></div>
+          <div class="ms-auto small" style="color:var(--text-muted)">Changes are saved when you press «Save».</div>
+        </div>
+        <p class="small mb-3" style="color:var(--text-muted)">
+          <i class="bi bi-info-circle me-1"></i>
+          Select the courses you have recently completed and enter their grades. If a course is already registered, its grade will be updated.
+        </p>
+        <div id="new-courses-list" class="row g-2 mb-3"></div>
+        <div class="d-flex gap-2 align-items-end mb-3 flex-wrap">
+          <div style="min-width:260px;flex:2">
+            <label class="form-label mb-1 small fw-semibold">Select Course</label>
+            <select id="add-course-select" class="form-select form-select-sm">
+              <option value="">— Select a course —</option>
+              {% for c in not_taken %}
+              <option value="{{ c.code }}" data-name="{{ c.name }}" data-hours="{{ c.hours }}">
+                {{ c.code }} — {{ c.name }} ({{ c.hours }} CH)
+              </option>
+              {% endfor %}
+              {% set all_taken_list = passed + failed %}
+              {% if all_taken_list %}
+              <optgroup label="Update an already-registered course">
+                {% for c in all_taken_list %}
+                <option value="{{ c.code }}" data-name="{{ c.name }}" data-hours="{{ c.hours }}">
+                  {{ c.code }} — {{ c.name }} ({{ c.hours }} CH) [{{ c.get('grade','?') }}]
+                </option>
+                {% endfor %}
+              </optgroup>
+              {% endif %}
+            </select>
+          </div>
+          <div style="min-width:110px">
+            <label class="form-label mb-1 small fw-semibold">Grade</label>
+            <select id="add-grade-select" class="form-select form-select-sm">
+              {% for g in ["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","F"] %}
+              <option value="{{ g }}">{{ g }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-sm btn-outline-primary" id="btn-add-course-row" style="height:31px">
+            <i class="bi bi-plus-lg me-1"></i>Add
+          </button>
+        </div>
+        <div id="add-courses-empty" class="text-center py-3" style="color:var(--text-muted)">No courses selected yet.</div>
+        <button class="btn btn-primary px-4" id="save-new-courses-btn" style="display:none;">
+          <i class="bi bi-floppy me-2"></i>Save & Recalculate Plan
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end tab-content -->
+
+<!-- Toast -->
+<div id="toast-container">
+  <div id="main-toast" class="toast align-items-center text-bg-success border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toast-msg">Done!</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const GRADE_POINTS = {
+  "A+":4.0,"A":4.0,"A-":3.7,
+  "B+":3.3,"B":3.0,"B-":2.7,
+  "C+":2.3,"C":2.0,"C-":1.7,
+  "D+":1.3,"D":1.0,"F":0.0,
+};
+const PT1 = "ECE3000", PT2 = "ECE4000";
+
+// ── Live GPA ─────────────────────────────────────────────────────────
+function recalcLiveGPA() {
+  const selects = document.querySelectorAll(".grade-edit");
+  let pts = 0, hrs = 0;
+  selects.forEach(s => {
+    const g = s.value, h = parseInt(s.dataset.hours) || 0;
+    if (GRADE_POINTS[g] !== undefined && h > 0) { pts += GRADE_POINTS[g]*h; hrs += h; }
+  });
+  if (!hrs) return;
+  const gpa = (pts/hrs).toFixed(2);
+  const gpaEl  = document.getElementById("live-gpa");
+  const badgeEl= document.getElementById("live-load-badge");
+  gpaEl.textContent = gpa;
+  if (parseFloat(gpa) > 3.3) {
+    gpaEl.style.color="var(--success)"; badgeEl.textContent="Overload (21 CH)"; badgeEl.className="badge bg-success gpa-live-badge";
+  } else if (parseFloat(gpa) >= 2.0) {
+    gpaEl.style.color="var(--primary)"; badgeEl.textContent="Normal Load (19 CH)"; badgeEl.className="badge bg-primary gpa-live-badge";
+  } else {
+    gpaEl.style.color="var(--danger)";  badgeEl.textContent="Half Load (14 CH)";  badgeEl.className="badge bg-danger gpa-live-badge";
+  }
+}
+document.querySelectorAll(".grade-edit").forEach(s => s.addEventListener("change", recalcLiveGPA));
+
+// ── Save grades ───────────────────────────────────────────────────────
+document.getElementById("save-grades-btn")?.addEventListener("click", async () => {
+  const updates = [...document.querySelectorAll(".grade-edit")]
+                    .map(s => ({code: s.dataset.code, grade: s.value}));
+  const resp = await fetch("{{ url_for('update_grades') }}", {
+    method:"POST", headers:{"Content-Type":"application/json", "X-CSRF-Token":{{ csrf_token|tojson }}},
+    body: JSON.stringify({updates})
+  });
+  const data = await resp.json();
+  if (data.ok) { showToast(data.message + " Reloading…","success"); setTimeout(()=>location.reload(),1400); }
+  else showToast("Error saving grades.","danger");
+});
+
+// ── Render plan helper ───────────────────────────────────────────────
+function renderPlan(plan) {
+  const container = document.getElementById("plan-container");
+  if (!plan || plan.length === 0) {
+    container.innerHTML = `<div class="text-center py-4" style="color:var(--success)">
+      <i class="bi bi-trophy-fill display-4"></i>
+      <h4 class="mt-3">Congratulations! All courses completed 🎓</h4></div>`;
+    return;
+  }
+  let html = `<div class="plan-grid">`;
+  plan.forEach(sem => {
+    const hdrClass = sem.is_summer ? "summer" : "regular";
+    const icon     = sem.is_summer ? "sun-fill" : "calendar-week";
+    const sumBadge = sem.is_summer ? `<span class="summer-comp-badge"><i class="bi bi-arrow-repeat me-1"></i>Compensation</span>` : "";
+    let pills = "";
+    sem.courses.forEach(c => {
+      const isPT = (c.code === PT1 || c.code === PT2);
+      const ptLabel = isPT ? `<span class="pt-label">${c.code===PT1?"PT 1":"PT 2"}</span>` : "";
+      const cls = isPT ? "course-pill pt-pill" : "course-pill";
+      const chBadge = c.hours > 0 ? `<span class="pill-ch">${c.hours}CH</span>` : `<span class="pill-ch">0CH</span>`;
+      pills += `<span class="${cls}"><span class="pill-code">${c.code}</span><span>${c.name}${ptLabel}</span>${chBadge}</span>`;
+    });
+    html += `<div class="p-2">
+      <div class="sem-card">
+        <div class="sem-card-header ${hdrClass}">
+          <span><i class="bi bi-${icon} me-2"></i>${sem.label}${sumBadge}</span>
+          <span class="badge bg-white text-dark">${sem.total_hours} CH</span>
+        </div>
+        <div class="sem-card-body">
+          ${pills || '<span class="fst-italic small" style="color:var(--text-muted)">No courses scheduled.</span>'}
+          <div class="sem-footer"><i class="bi bi-book me-1"></i>${sem.courses.length} course(s) · ${sem.total_hours} credit hours</div>
+        </div>
+      </div></div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+  // update counters
+  const cnt = document.getElementById("sem-count-badge");
+  const cntTxt = document.getElementById("sem-count-txt");
+  if (cnt)    cnt.textContent = `${plan.length} terms projected`;
+  if (cntTxt) cntTxt.textContent = plan.length;
+}
+
+// ── Overload banner ──────────────────────────────────────────────────
+const bannerEl = document.getElementById("overload-banner");
+document.getElementById("btn-allow-overload")?.addEventListener("click", async () => {
+  if (bannerEl) bannerEl.style.display = "none";
+  await fetchPlanWithOverload(true);
+});
+document.getElementById("btn-no-overload")?.addEventListener("click", async () => {
+  if (bannerEl) bannerEl.style.display = "none";
+  await fetchPlanWithOverload(false);
+});
+async function fetchPlanWithOverload(allow) {
+  const resp = await fetch("{{ url_for('plan_with_overload') }}", {
+    method:"POST", headers:{"Content-Type":"application/json", "X-CSRF-Token":{{ csrf_token|tojson }}},
+    body: JSON.stringify({allow_overload: allow})
+  });
+  const data = await resp.json();
+  if (data.ok) {
+    renderPlan(data.plan);
+    showToast(allow ? "Overload applied to next semester ✅" : "Normal load plan generated ✅", "success");
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────
+function showToast(msg, type="success") {
+  const t = document.getElementById("main-toast");
+  t.className = `toast align-items-center text-bg-${type} border-0`;
+  document.getElementById("toast-msg").textContent = msg;
+  new bootstrap.Toast(t, {delay:2800}).show();
+}
+
+// ── Add New Courses tab ─────────────────────────────────────────────────
+const GRADE_POINTS_ADD = {
+  "A+":4.0,"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,
+  "C+":2.3,"C":2.0,"C-":1.7,"D+":1.3,"D":1.0,"F":0.0,
+};
+const existingForGpa = [
+  {% for c in passed + failed %}{code:"{{ c.code }}", grade:"{{ c.get('grade','') }}", hours:{{ c.hours }}},{% endfor %}
+];
+
+let pendingNewCourses = {};
+
+function updateAddLiveGpa() {
+  const combined = {};
+  existingForGpa.forEach(c => combined[c.code] = {...c});
+  Object.values(pendingNewCourses).forEach(c => combined[c.code] = c);
+  let pts = 0, hrs = 0;
+  Object.values(combined).forEach(c => {
+    const gp = GRADE_POINTS_ADD[c.grade];
+    if (gp !== undefined && c.hours > 0) { pts += gp * c.hours; hrs += c.hours; }
+  });
+  if (!hrs) return;
+  const gpa = (pts/hrs).toFixed(2);
+  const el = document.getElementById("add-live-gpa");
+  const badge = document.getElementById("add-live-badge");
+  if (el) el.textContent = gpa;
+  if (badge) {
+    if (parseFloat(gpa) > 3.3) {
+      badge.textContent = "Overload (21 CH)"; badge.className = "badge bg-success gpa-live-badge";
+    } else if (parseFloat(gpa) >= 2.0) {
+      badge.textContent = "Normal Load (19 CH)"; badge.className = "badge bg-primary gpa-live-badge";
+    } else {
+      badge.textContent = "Half Load (14 CH)"; badge.className = "badge bg-danger gpa-live-badge";
+    }
+  }
+}
+
+function renderNewCoursesList() {
+  const list = document.getElementById("new-courses-list");
+  const saveBtn = document.getElementById("save-new-courses-btn");
+  const emptyMsg = document.getElementById("add-courses-empty");
+  if (!list) return;
+  list.innerHTML = "";
+  const entries = Object.values(pendingNewCourses);
+  if (!entries.length) {
+    if (emptyMsg) emptyMsg.style.display = "block";
+    if (saveBtn) saveBtn.style.display = "none";
+    return;
+  }
+  if (emptyMsg) emptyMsg.style.display = "none";
+  if (saveBtn) saveBtn.style.display = "";
+  entries.forEach(c => {
+    const isFail = c.grade === "F";
+    const badgeCls = isFail ? "bg-danger" : "bg-success";
+    list.innerHTML += `
+      <div class="col-md-6" id="row-${c.code}">
+        <div class="d-flex align-items-center gap-2 p-2 rounded" style="border:1px solid var(--border);background:var(--surface);">
+          <div class="flex-grow-1">
+            <span class="fw-semibold small">${c.name}</span><br>
+            <span class="small" style="color:var(--text-muted)">${c.code} &middot; ${c.hours} CH</span>
+          </div>
+          <span class="badge ${badgeCls}">${c.grade}</span>
+          <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeNewCourse('${c.code}')">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>`;
+  });
+  updateAddLiveGpa();
+}
+
+function removeNewCourse(code) {
+  delete pendingNewCourses[code];
+  renderNewCoursesList();
+}
+
+document.getElementById("btn-add-course-row")?.addEventListener("click", () => {
+  const sel = document.getElementById("add-course-select");
+  const gradeEl = document.getElementById("add-grade-select");
+  if (!sel || !sel.value) { showToast("Please select a course first.", "warning"); return; }
+  const opt = sel.options[sel.selectedIndex];
+  const code = sel.value;
+  const name = opt.dataset.name || code;
+  const hours = parseInt(opt.dataset.hours) || 0;
+  const grade = gradeEl.value;
+  pendingNewCourses[code] = {code, name, hours, grade};
+  renderNewCoursesList();
+  sel.value = "";
+});
+
+document.getElementById("save-new-courses-btn")?.addEventListener("click", async () => {
+  const entries = Object.values(pendingNewCourses);
+  if (!entries.length) return;
+  const resp = await fetch(ADD_COURSES_URL, {
+    method:"POST", headers:{"Content-Type":"application/json", "X-CSRF-Token":{{ csrf_token|tojson }}},
+    body: JSON.stringify({entries})
+  });
+  const data = await resp.json();
+  if (data.ok) {
+    showToast(data.message + " — Reloading…", "success");
+    renderPlan(data.plan);
+    setTimeout(() => location.reload(), 1600);
+  } else {
+    showToast(data.message || "An error occurred.", "danger");
+  }
+});
+
+const ADD_COURSES_URL = "{{ url_for('add_new_courses') }}";
+</script>
+{% endblock %}
