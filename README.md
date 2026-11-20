@@ -35,6 +35,8 @@ On Windows, activate with `.venv\Scripts\activate` instead. Open [localhost:5000
 
 Accounts belong to this local app. It does not connect to a university portal or validate a registration number against an official student directory. Use a separate password, rather than your university password. No real student records or demo passwords are distributed in the repository.
 
+![Course roadmap preview with fictional student data](docs/plan-preview.png)
+
 ## Planning model
 
 | Rule | Behavior |
@@ -70,7 +72,7 @@ Legacy records from the supplied name-only login have no password hash and canno
 
 ## Verification
 
-41 automated tests pass locally. Browser checks exercised registration, plan generation and grade updates with fictional data. No official curriculum or real student account was used.
+41 automated tests pass locally and in [GitHub Actions on Python 3.10 and 3.12](https://github.com/rashwan26/academic-planning/actions/runs/44822307895). Browser checks exercised registration, plan generation and grade updates with fictional data. No official curriculum or real student account was used.
 
 ## Tests
 

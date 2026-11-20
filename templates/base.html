@@ -320,10 +320,7 @@
   [data-theme="dark"] .text-dark { color: var(--text) !important; }
   [data-theme="dark"] small { color: var(--text-muted); }
   /* Fix inline-style overrides: card-header with hardcoded background colors */
-  [data-theme="dark"] .card-header[style*="background:var(--primary)"] { color: #fff !important; }
-  [data-theme="dark"] .card-header[style*="background:linear-gradient"] { color: #fff !important; }
   /* Fix Add New Courses card header in dark mode */
-  [data-theme="dark"] .card-header[style*="#1e3a5f"] { color: #fff !important; }
   /* Fix badge-hours and sem-footer in dark mode */
   [data-theme="dark"] .badge-hours { background: var(--surface-2); color: var(--text-muted); border-color: var(--border); }
   /* Fix pill-code and pill-ch text in dark mode */
@@ -340,8 +337,6 @@
   [data-theme="dark"] .section-nav .nav-link.active { background: var(--tab-active-bg) !important; color: #fff !important; border-color: var(--tab-active-bg); }
   [data-theme="dark"] .section-nav .nav-link i { color: inherit; }
   /* Light mode: ensure text on colored card-headers is visible */
-  [data-theme="light"] .card-header[style*="background:var(--primary)"],
-  [data-theme="light"] .card-header[style*="background:linear-gradient"] { color: #fff !important; }
 
   /* Light mode explicit fixes for visibility */
   [data-theme="light"] .card-header { color: var(--text); }
